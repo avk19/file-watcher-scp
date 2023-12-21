@@ -1,0 +1,1 @@
+java -jar your_application.jar /path/to/config.properties

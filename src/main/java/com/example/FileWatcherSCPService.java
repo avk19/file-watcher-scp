@@ -9,43 +9,41 @@ import java.nio.file.*;
 
 @Service
 public class FileWatcherSCPService {
-	public void watchAndCopyFiles(String localFolder, String remoteFolder, String username, String hostname,
-			String password) throws JSchException, IOException, InterruptedException {
-		WatchService watchService = FileSystems.getDefault().newWatchService();
-		Path path = Paths.get(localFolder);
-		path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
 
-		JSch jsch = new JSch();
-		Session session = jsch.getSession(username, hostname, 22);
-		session.setPassword(password);
-		session.setConfig("StrictHostKeyChecking", "no");
-		session.connect();
+    public void watchAndCopyFiles(String localFolder, String remoteFolder, String username, String hostname, String password)
+            throws JSchException, IOException, InterruptedException {
 
-		while (true) {
-			WatchKey key = watchService.take();
+        var watchService = FileSystems.getDefault().newWatchService();
+        var path = Paths.get(localFolder);
+        path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
 
-			for (WatchEvent<?> event : key.pollEvents()) {
-				WatchEvent.Kind<?> kind = event.kind();
+        var jsch = new JSch();
+        var session = jsch.getSession(username, hostname, 22);
+        session.setPassword(password);
+        session.setConfig("StrictHostKeyChecking", "no");
+        session.connect();
 
-				if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
-					@SuppressWarnings("unchecked")
-					WatchEvent<Path> ev = (WatchEvent<Path>) event;
-					Path fileName = ev.context();
+        while (true) {
+            var key = watchService.take();
 
-					ChannelExec channelExec = (ChannelExec) session.openChannel("exec");
-					channelExec.setCommand("scp " + localFolder + "/" + fileName + " " + username + "@" + hostname + ":"
-							+ remoteFolder);
-					channelExec.connect();
-					channelExec.disconnect();
-				}
-			}
+            for (var event : key.pollEvents()) {
+                if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
+                    var ev = (WatchEvent<Path>) event;
+                    var fileName = ev.context();
 
-			boolean valid = key.reset();
-			if (!valid) {
-				break;
-			}
-		}
+                    var channelExec = (ChannelExec) session.openChannel("exec");
+                    channelExec.setCommand("scp " + localFolder + "/" + fileName + " " + username + "@" + hostname + ":" + remoteFolder);
+                    channelExec.connect();
+                    channelExec.disconnect();
+                }
+            }
 
-		session.disconnect();
-	}
+            var valid = key.reset();
+            if (!valid) {
+                break;
+            }
+        }
+
+        session.disconnect();
+    }
 }
