@@ -37,7 +37,8 @@ public class FileWatcherSCPService {
 
             for (var event : key.pollEvents()) {
                 if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-                    var ev = (WatchEvent<Path>) event;
+                    @SuppressWarnings("unchecked")
+					var ev = (WatchEvent<Path>) event;
                     var fileName = ev.context();
 
                     var sourceFilePath = Paths.get(localFolder, fileName.toString());
@@ -55,7 +56,8 @@ public class FileWatcherSCPService {
                     Files.copy(sourceFilePath, backupFilePath, StandardCopyOption.REPLACE_EXISTING);
 
                     var channelExec = (ChannelExec) session.openChannel("exec");
-                    channelExec.setCommand("scp " + sourceFilePath + " " + username + "@" + hostname + ":" + remoteFolder);
+                    //channelExec.setCommand("scp " + sourceFilePath + " " + username + "@" + hostname + ":" + remoteFolder);
+                    channelExec.setCommand("scp -c aes256 " + sourceFilePath + " " + username + "@" + hostname + ":" + remoteFolder);
                     channelExec.connect();
                     channelExec.disconnect();
                 }
