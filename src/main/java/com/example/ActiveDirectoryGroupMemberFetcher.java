@@ -6,24 +6,23 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
-public class ActiveDirectoryGroupFetcher {
+public class ActiveDirectoryGroupMemberFetcher {
 
     public static void main(String[] args) {
         String baseUsername = "yourBaseUsername";
         String baseDomainName = "yourBaseDomain";
 
-        String searchUsername = "yourSearchUsername";
-        String searchDomainName = "yourSearchDomain";
+        String groupName = "YourADGroupName";
 
-        List<String> groups = fetchActiveDirectoryGroups(baseUsername, baseDomainName, searchUsername, searchDomainName);
+        List<String> users = fetchUsersForADGroup(baseUsername, baseDomainName, groupName);
 
-        System.out.println("Active Directory Groups for User " + searchUsername + " in Domain " + searchDomainName + ":");
-        for (String group : groups) {
-            System.out.println(group);
+        System.out.println("Users in Active Directory Group " + groupName + ":");
+        for (String user : users) {
+            System.out.println(user);
         }
     }
 
-    public static List<String> fetchActiveDirectoryGroups(String baseUsername, String baseDomainName, String searchUsername, String searchDomainName) {
+    public static List<String> fetchUsersForADGroup(String baseUsername, String baseDomainName, String groupName) {
         String ldapsUrl = "ldaps://" + baseDomainName + ":636"; // LDAPS URL with port 636
 
         LdapContext context = null;
@@ -31,7 +30,7 @@ public class ActiveDirectoryGroupFetcher {
             context = ldapOperation(ldapsUrl);
             bindWithCredentials(context, baseUsername, getPassword(baseUsername, baseDomainName), baseDomainName);
 
-            return searchForGroups(context, searchUsername);
+            return getUsersForADGroup(context, groupName);
 
         } catch (NamingException e) {
             throw new RuntimeException("Error accessing Active Directory: " + e.getMessage(), e);
@@ -62,36 +61,25 @@ public class ActiveDirectoryGroupFetcher {
         context.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
     }
 
-    private static List<String> searchForGroups(LdapContext context, String searchUsername) throws NamingException {
+    private static List<String> getUsersForADGroup(LdapContext context, String groupName) throws NamingException {
         SearchControls searchControls = new SearchControls();
         searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
         NamingEnumeration<SearchResult> results = context.search(
                 "CN=Users,DC=yourBaseDomain,DC=com",  // Adjust the base DN as per your AD structure
-                "(&(objectClass=user)(sAMAccountName=" + searchUsername + "))",
+                "(&(objectClass=user)(memberOf=CN=" + groupName + ",CN=Users,DC=yourBaseDomain,DC=com))",
                 searchControls
         );
 
-        if (results.hasMore()) {
+        List<String> users = new ArrayList<>();
+        while (results.hasMore()) {
             SearchResult entry = results.next();
-            Attribute memberOfAttribute = entry.getAttributes().get("memberOf");
-
-            return getAttributeValues(memberOfAttribute);
-        } else {
-            throw new RuntimeException("User " + searchUsername + " not found in Active Directory");
-        }
-    }
-
-    private static List<String> getAttributeValues(Attribute attribute) throws NamingException {
-        NamingEnumeration<?> attributeValues = attribute.getAll();
-        List<String> values = new ArrayList<>();
-
-        while (attributeValues.hasMore()) {
-            String value = (String) attributeValues.next();
-            values.add(value);
+            Attribute sAMAccountNameAttribute = entry.getAttributes().get("sAMAccountName");
+            String sAMAccountName = sAMAccountNameAttribute.get().toString();
+            users.add(sAMAccountName);
         }
 
-        return values;
+        return users;
     }
 
     private static String getPassword(String username, String domainName) {
