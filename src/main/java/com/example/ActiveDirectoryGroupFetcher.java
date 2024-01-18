@@ -1,5 +1,3 @@
-package com.example;
-
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -86,4 +84,23 @@ public class ActiveDirectoryGroupFetcher {
             } catch (NamingException e) {
                 throw new RuntimeException("LDAP Search Error: " + e.getMessage(), e);
             }
+        };
+    }
+
+    private static List<String> getAttributeValues(Attribute attribute) throws NamingException {
+        NamingEnumeration<?> attributeValues = attribute.getAll();
+        List<String> values = new java.util.ArrayList<>();
+
+        while (attributeValues.hasMore()) {
+            String value = (String) attributeValues.next();
+            values.add(value);
         }
+
+        return values;
+    }
+
+    private static String getPassword(String username, String domainName) {
+        // Implement a secure way to fetch the password (e.g., from a configuration file, environment variable, etc.)
+        return "yourPassword";
+    }
+}
