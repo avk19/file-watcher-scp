@@ -1,7 +1,7 @@
+import org.springframework.ldap.core.ContextMapper;
+import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.ldap.core.LdapTemplate;
-import org.springframework.ldap.core.AttributesMapper;
-import org.springframework.ldap.core.AttributesMapperCallbackHandler;
-import javax.naming.directory.Attributes;
+
 import javax.naming.ldap.LdapName;
 
 public class LdapExample {
@@ -14,9 +14,9 @@ public class LdapExample {
 
     public String getNameInNamespace(String samAccountName) {
         String filter = "(sAMAccountName=" + samAccountName + ")";
-        LdapName nameInNamespace = ldapTemplate.searchForObject("", filter, (AttributesMapper<LdapName>) attrs -> {
-            // Assuming the "nameInNamespace" is retrieved from the "Attributes"
-            return new LdapName(attrs.get("nameInNamespace").get().toString());
+        LdapName nameInNamespace = ldapTemplate.searchForObject("", filter, (ContextMapper<LdapName>) ctx -> {
+            DirContextOperations context = (DirContextOperations) ctx;
+            return new LdapName(context.getNameInNamespace());
         });
 
         return nameInNamespace != null ? nameInNamespace.toString() : null;
