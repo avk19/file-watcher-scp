@@ -1,7 +1,8 @@
 import org.springframework.ldap.core.LdapTemplate;
-import org.springframework.ldap.core.LdapOperationsCallback;
-import javax.naming.Name;
-import javax.naming.directory.DirContext;
+import org.springframework.ldap.core.AttributesMapper;
+import org.springframework.ldap.core.AttributesMapperCallbackHandler;
+import javax.naming.directory.Attributes;
+import javax.naming.ldap.LdapName;
 
 public class LdapExample {
 
@@ -11,12 +12,14 @@ public class LdapExample {
         this.ldapTemplate = ldapTemplate;
     }
 
-    public String getNameInNamespace(String username) {
-        return ldapTemplate.executeReadOnly((LdapOperationsCallback<String>) ldapOperations -> {
-            DirContext dirContext = ldapOperations.getContextSource().getContext(username, "yourPassword");
-            Name name = dirContext.getNameInNamespace();
-            return name.toString();
+    public String getNameInNamespace(String samAccountName) {
+        String filter = "(sAMAccountName=" + samAccountName + ")";
+        LdapName nameInNamespace = ldapTemplate.searchForObject("", filter, (AttributesMapper<LdapName>) attrs -> {
+            // Assuming the "nameInNamespace" is retrieved from the "Attributes"
+            return new LdapName(attrs.get("nameInNamespace").get().toString());
         });
+
+        return nameInNamespace != null ? nameInNamespace.toString() : null;
     }
 
     public static void main(String[] args) {
@@ -24,8 +27,8 @@ public class LdapExample {
         LdapTemplate ldapTemplate = getYourLdapTemplateInstance();
         LdapExample ldapExample = new LdapExample(ldapTemplate);
 
-        // Replace "yourUsername" with the actual username
-        String nameInNamespace = ldapExample.getNameInNamespace("yourUsername");
+        // Replace "yourSamAccountName" with the actual SAM account name
+        String nameInNamespace = ldapExample.getNameInNamespace("yourSamAccountName");
         System.out.println("Name in Namespace: " + nameInNamespace);
     }
 
