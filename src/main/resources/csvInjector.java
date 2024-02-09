@@ -27,15 +27,6 @@ public class CsvWriterExample {
         if (Objects.isNull(input)) {
             return "\"\"";
         }
-
-        // Escape double quotes by doubling them
-        String escapedValue = input.replace("\"", "\"\"");
-
-        // Check if the value starts with specific combinations and prepend an apostrophe
-        if (escapedValue.matches("^[*][=+@-].*")) {
-            escapedValue = "'" + escapedValue;
-        }
-
-        return "\"" + escapedValue + "\"";
+        return "\"" + input.replace("\"", "\"\"").replaceAll("[=*+@-]", "'$0") + "\"";
     }
 }
