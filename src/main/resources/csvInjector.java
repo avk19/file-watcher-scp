@@ -24,6 +24,10 @@ public class CsvWriterExample {
 
     // Function to escape special characters, Excel formulas, and specific combinations
     private static String escapeSpecialCharacters(String input) {
+        if (Objects.isNull(input)) {
+            return "\"\"";
+        }
+
         // Escape double quotes by doubling them
         String escapedValue = input.replace("\"", "\"\"");
 
