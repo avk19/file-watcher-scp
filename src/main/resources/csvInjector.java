@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 public class CsvWriterExample {
     public static void main(String[] args) {
         // Example data
-        List<String> data = Arrays.asList("John", "=SUM(A1:B1)", "Doe");
+        List<String> data = Arrays.asList("John", "=SUM(A1:B1)", "Doe", "*=", "*+", "*-", "*@");
 
         // CSV file path
         String filePath = "example.csv";
@@ -22,8 +22,16 @@ public class CsvWriterExample {
         }
     }
 
-    // Function to escape special characters and Excel formulas
+    // Function to escape special characters, Excel formulas, and specific combinations
     private static String escapeSpecialCharacters(String input) {
-        return "\"" + input.replace("\"", "\"\"").replaceFirst("^=", "'=") + "\"";
+        // Escape double quotes by doubling them
+        String escapedValue = input.replace("\"", "\"\"");
+
+        // Check if the value starts with specific combinations and prepend an apostrophe
+        if (escapedValue.matches("^[*][=+@-].*")) {
+            escapedValue = "'" + escapedValue;
+        }
+
+        return "\"" + escapedValue + "\"";
     }
 }
